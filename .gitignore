@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+src/forklab/command_executor
+src/forklab/forklab_demo.txt
+src/forklab/demo.txt

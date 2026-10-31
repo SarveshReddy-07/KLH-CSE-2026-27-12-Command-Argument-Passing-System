@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="An interactive OS lab: real C process execution, pipelines, live processes and CPU scheduling simulations.">
+    <title>ForkLab | The Operating System Playground</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%238b5cf6'/%3E%3Cpath d='m16 20 12 12-12 12m20 0h14' fill='none' stroke='white' stroke-width='5'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="styles.css?v=2.0.2">
+    <script src="scheduler.js?v=2.0.1" defer></script>
+    <script src="app.js?v=2.0.2" defer></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="/" aria-label="ForkLab home"><span class="brand-mark">&gt;_</span>ForkLab<span class="version">2.0</span></a>
+        <p class="nav-label">YOUR WORKSPACE</p>
+        <nav aria-label="Workspace navigation">
+            <button class="nav-item active" data-view="terminal" aria-current="page"><span class="nav-icon">&gt;_</span>Command lab<span class="key-hint">1</span></button>
+            <button class="nav-item" data-view="monitor"><span class="nav-icon">|||</span>Process monitor<span class="key-hint">2</span></button>
+            <button class="nav-item" data-view="scheduler"><span class="nav-icon">=</span>CPU scheduler<span class="key-hint">3</span></button>
+            <button class="nav-item" data-view="experiments"><span class="nav-icon">+</span>Experiments<span class="key-hint">4</span></button>
+            <button class="nav-item" data-view="history"><span class="nav-icon">@</span>Execution history<span class="key-hint">5</span></button>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="local-card"><span class="status-dot"></span><strong>Local-first. Real processes.</strong><p>No cloud. No external dependencies.<br>Powered by C + Python + curiosity.</p></div>
+            <div class="team-label">OSSP / PBL 2026–27<br><strong>TEAM 12</strong> · KLH Bachupally</div>
+        </div>
+    </aside>
+
+    <div class="app-shell">
+        <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong id="view-label">Command lab</strong></div><div class="topbar-right"><span id="platform-label">Connecting...</span><span class="server-status" id="server-status"><span class="status-dot"></span><span id="connection-label">Checking server</span></span></div></header>
+        <main>
+            <div class="notification" id="notification" role="status" hidden></div>
+            <section class="view" id="view-terminal" aria-labelledby="terminal-title">
+                <div class="page-intro"><div><p class="eyebrow"><span class="tiny-line"></span>THE OPERATING SYSTEM PLAYGROUND</p><h1>Small commands.<br><span class="gradient-text">Big understanding.</span></h1><p class="intro-copy">Don't just run a command. See the processes, pipes and system calls that make it happen.</p></div><div class="hero-art" aria-hidden="true"><div class="orbit orbit-one"></div><div class="orbit orbit-two"></div><span class="orbit-node node-a">fork()</span><span class="orbit-node node-b">execvp()</span><span class="orbit-node node-c">waitpid()</span><div class="hero-core">&gt;_</div></div></div>
+                <div class="stats-grid" aria-label="Execution statistics">
+                    <article class="stat-card"><span class="stat-icon purple">&gt;_</span><div><span>Commands run</span><strong id="stat-runs">0</strong><small>Saved in this browser</small></div></article>
+                    <article class="stat-card"><span class="stat-icon green">OK</span><div><span>Success rate</span><strong id="stat-success">—</strong><small>Exit status zero</small></div></article>
+                    <article class="stat-card"><span class="stat-icon orange">ms</span><div><span>Average execution</span><strong id="stat-duration">—</strong><small>Actual wall-clock duration</small></div></article>
+                    <article class="stat-card"><span class="stat-icon blue">CPU</span><div><span>Logical CPU cores</span><strong id="stat-cores">—</strong><small id="stat-platform">Your local machine</small></div></article>
+                </div>
+                <div class="terminal-grid">
+                    <section class="panel terminal-panel" aria-labelledby="terminal-title">
+                        <div class="panel-heading"><div class="heading-inline"><span class="window-dots" aria-hidden="true"><i></i><i></i><i></i></span><h2 id="terminal-title">Interactive terminal</h2></div><div class="toolbar"><label class="sr-only" for="execution-mode">Execution mode</label><select id="execution-mode"><option value="mini">Mini shell v2</option><option value="classic">Classic executor v1</option></select><button class="text-button" id="clear-button" type="button">Clear</button></div></div>
+                        <div class="cwd-bar"><span class="status-dot"></span><span id="cwd-label">Loading working directory...</span><button class="text-button" id="copy-cwd" title="Copy working directory" type="button">Copy path</button></div>
+                        <div class="terminal-window" id="terminal-output" role="log" aria-label="Command output">
+                            <div class="welcome-block"><div class="terminal-emblem">&gt;_</div><h3>Your OS, under the microscope.</h3><p>Start with a command. We'll handle the fork, and show you the rest.</p><div class="terminal-tags"><span>C11 / POSIX</span><span>Real execution</span><span>Local only</span></div><p class="terminal-tip">Try <code>printf "hello\nworld\n" | wc -l</code><br>Type <code>help</code> for commands. Use ↑ / ↓ for history.</p></div>
+                        </div>
+                        <form class="command-form" id="command-form"><span class="prompt-mark" aria-hidden="true">❯</span><label class="sr-only" for="command-input">Command</label><input id="command-input" name="command" type="text" autocomplete="off" spellcheck="false" placeholder="Type a command and press Enter..." maxlength="1024"><button class="stop-button" id="stop-button" type="button" disabled>■ Stop</button><button class="primary-button" id="run-button" type="submit">Run <span aria-hidden="true">↵</span></button></form>
+                        <div class="quick-commands"><span>QUICK START</span><button data-command="pwd" type="button">pwd</button><button data-command="ls -la" type="button">ls -la</button><button data-command="whoami" type="button">whoami</button><button data-command="printf &quot;hello\nworld\n&quot; | wc -l" type="button">Try a pipe ↗</button></div>
+                        <p class="safety-note" id="mode-note">Mini shell supports |, &lt;, &gt;, &gt;&gt; and cd. Commands run with your permissions; redirection can overwrite files. 12s / 256 KiB limits.</p>
+                    </section>
+                    <aside class="terminal-aside">
+                        <section class="panel execution-panel"><div class="panel-heading"><div><p class="eyebrow">BEHIND THE COMMAND</p><h2>Process explorer</h2></div><span class="badge" id="execution-state">Ready</span></div><div class="process-flow" id="process-flow"><div class="process-node"><span class="node-symbol purple">P</span><div><strong>Parent process</strong><code id="parent-pid">Waiting for execution</code></div></div><div class="flow-link">fork() <span>creates</span></div><div id="child-nodes"><div class="process-node"><span class="node-symbol green">C</span><div><strong>Child process</strong><code>execvp() loads your command</code></div></div></div><div class="flow-link">waitpid() <span>collects exit status</span></div><div class="execution-summary"><span>Duration</span><strong id="duration">—</strong></div></div><p class="panel-footnote" id="process-note">PIDs and traces come from the C executor, not a simulation.</p></section>
+                        <section class="spotlight-card"><span class="badge">LEVEL UP YOUR DEMO</span><h3>One command.<br>Multiple processes.</h3><p>Connect commands with a real POSIX pipe and watch the process tree grow.</p><button class="text-link" data-command="printf &quot;apple\nbanana\napple\n&quot; | sort | uniq -c" type="button">Run a 3-stage pipeline <span>↗</span></button></section>
+                        <section class="mini-concept"><span class="mini-concept-icon">i</span><p><strong>A shell isn't magic.</strong><br><code>fork()</code> creates. <code>execvp()</code> replaces. <code>waitpid()</code> collects. That's your core.</p></section>
+                    </aside>
+                </div>
+            </section>
+
+            <section class="view" id="view-monitor" aria-labelledby="monitor-title" hidden>
+                <div class="section-intro"><div><p class="eyebrow">WHAT'S RUNNING RIGHT NOW</p><h1 id="monitor-title">Process monitor<span class="accent-dot">.</span></h1><p class="intro-copy">A read-only window into your machine. Real PIDs, resource usage and process states.</p></div><div class="toolbar"><button class="secondary-button" id="monitor-pause" type="button">Pause updates</button><button class="primary-button" id="monitor-refresh" type="button">Refresh</button></div></div>
+                <div class="stats-grid monitor-stats"><article class="stat-card"><div><span>Total processes</span><strong id="monitor-total">—</strong><small>System-wide snapshot</small></div></article><article class="stat-card"><div><span>Runnable processes</span><strong id="monitor-running">—</strong><small>State begins with R</small></div></article><article class="stat-card"><div><span>Refresh interval</span><strong>3<span class="unit"> sec</span></strong><small id="monitor-updated">Not sampled yet</small></div></article></div>
+                <section class="panel"><div class="panel-heading"><h2>System processes</h2><label class="sr-only" for="process-search">Search processes</label><input class="search-input" id="process-search" placeholder="Search name or PID..." type="search"></div><div class="table-wrap"><table><thead><tr><th>Process</th><th>PID</th><th>Parent PID</th><th>CPU %</th><th>Memory %</th><th>State</th></tr></thead><tbody id="process-table"><tr><td colspan="6">Open this view to load a snapshot.</td></tr></tbody></table></div><p class="panel-footnote" id="monitor-note">Shows up to 100 processes, ordered by CPU use. CPU can exceed 100% on multicore machines. No kill controls.</p></section>
+            </section>
+
+            <section class="view" id="view-scheduler" aria-labelledby="scheduler-title" hidden>
+                <div class="section-intro"><div><p class="eyebrow">ONE CPU. DIFFERENT STRATEGIES.</p><h1 id="scheduler-title">The scheduling lab<span class="accent-dot">.</span></h1><p class="intro-copy">Build a workload. Compare the trade-offs. Watch every time slice.</p></div><span class="badge simulation-badge">EDUCATIONAL SIMULATION</span></div>
+                <div class="scheduler-grid"><section class="panel"><div class="panel-heading"><h2>Configure workload</h2><button class="text-button" id="scheduler-sample" type="button">Load sample</button></div><form id="scheduler-form" class="scheduler-form"><div class="form-grid"><label>Algorithm<select id="scheduler-algorithm"><option value="fcfs">First Come, First Served</option><option value="sjf">Shortest Job First</option><option value="rr">Round Robin</option></select></label><label>RR quantum (also used in comparison)<input id="scheduler-quantum" type="number" min="1" max="100" step="1" value="2" required></label></div><p class="field-help" id="algorithm-description">FCFS runs in arrival order, without preemption.</p><div class="table-wrap"><table class="workload-table"><thead><tr><th>Process</th><th>Arrival</th><th>Burst</th><th><span class="sr-only">Remove</span></th></tr></thead><tbody id="workload-rows"></tbody></table></div><button class="text-link" id="add-process" type="button">+ Add process</button><div class="form-actions"><span>1–12 processes · integer time units</span><button class="primary-button" type="submit">Simulate →</button></div></form></section><aside class="scheduler-explainer"><p class="eyebrow">READ THE RESULTS</p><h3>Fair doesn't always<br>mean fast.</h3><dl><div><dt>Waiting time</dt><dd>Time spent ready, but not executing.</dd></div><div><dt>Turnaround</dt><dd>Completion time minus arrival time.</dd></div><div><dt>Response time</dt><dd>First execution minus arrival time.</dd></div></dl><p>This model uses one CPU, zero context-switch overhead and CPU-only bursts. It does not change your OS scheduler.</p></aside></div>
+                <div id="scheduler-results" hidden><div class="stats-grid scheduler-stats"><article class="stat-card"><div><span>Average waiting</span><strong id="schedule-wait">—</strong><small>Time units</small></div></article><article class="stat-card"><div><span>Average turnaround</span><strong id="schedule-turnaround">—</strong><small>Time units</small></div></article><article class="stat-card"><div><span>Average response</span><strong id="schedule-response">—</strong><small>Time units</small></div></article><article class="stat-card"><div><span>CPU utilization</span><strong id="schedule-utilization">—</strong><small>Includes initial idle time</small></div></article></div><section class="panel"><div class="panel-heading"><div><p class="eyebrow">THE EXECUTION TIMELINE</p><h2>Gantt chart</h2></div><div class="toolbar"><span class="badge" id="playback-time">t = 0</span><button class="secondary-button" id="schedule-replay" type="button">Replay</button></div></div><div class="gantt-wrap"><div class="gantt" id="gantt-chart" aria-label="Scheduling Gantt chart"></div><div class="gantt-axis" id="gantt-axis"></div></div><p class="panel-footnote" id="schedule-summary"></p><div class="table-wrap"><table><thead><tr><th>Process</th><th>Arrival</th><th>Burst</th><th>Completion</th><th>Turnaround</th><th>Waiting</th><th>Response</th></tr></thead><tbody id="schedule-metrics"></tbody></table></div></section><section class="panel comparison-panel"><div class="panel-heading"><h2>Same workload. Three perspectives.</h2><span class="badge">LOWER WAIT IS BETTER</span></div><div class="table-wrap"><table><thead><tr><th>Algorithm</th><th>Avg. waiting</th><th>Avg. turnaround</th><th>Avg. response</th></tr></thead><tbody id="schedule-comparison"></tbody></table></div></section></div>
+                <p class="inline-error" id="scheduler-error" role="alert" hidden></p>
+            </section>
+
+            <section class="view" id="view-experiments" aria-labelledby="experiments-title" hidden>
+                <div class="section-intro"><div><p class="eyebrow">LESS SCROLLING. MORE DISCOVERY.</p><h1 id="experiments-title">Learn by doing<span class="accent-dot">.</span></h1><p class="intro-copy">Six small experiments that turn OS theory into something you can actually see.</p></div><span class="badge">6 GUIDED EXPERIMENTS</span></div>
+                <div class="experiment-grid" id="experiment-grid"></div>
+                <section class="panel concepts-panel"><div class="panel-heading"><h2>The C behind the curtain</h2><div class="concept-tabs" aria-label="System-call concepts"><button class="selected" data-concept="fork" type="button" aria-pressed="true">fork()</button><button data-concept="exec" type="button" aria-pressed="false">execvp()</button><button data-concept="wait" type="button" aria-pressed="false">waitpid()</button><button data-concept="pipe" type="button" aria-pressed="false">pipe()</button></div></div><div class="code-view"><pre><code id="concept-code"></code></pre><div><p class="eyebrow" id="concept-label"></p><h3 id="concept-title"></h3><p id="concept-text"></p></div></div></section>
+            </section>
+
+            <section class="view" id="view-history" aria-labelledby="history-title" hidden>
+                <div class="section-intro"><div><p class="eyebrow">YOUR EXPERIMENT LOG</p><h1 id="history-title">Every command counts<span class="accent-dot">.</span></h1><p class="intro-copy">Search, inspect and rerun your last 100 executions. Stored only in this browser; avoid commands containing credentials.</p></div><div class="toolbar"><button class="secondary-button" id="export-history" type="button">Export JSON ↓</button><button class="danger-button" id="clear-history" type="button">Clear history</button></div></div>
+                <section class="panel"><div class="panel-heading"><h2>Execution history <span class="badge" id="history-count">0</span></h2><label class="sr-only" for="history-search">Search command history</label><input class="search-input" id="history-search" type="search" placeholder="Search command or directory..."></div><div class="table-wrap"><table><thead><tr><th>Command / working directory</th><th>Result</th><th>Duration</th><th>Executed</th><th><span class="sr-only">Rerun</span></th></tr></thead><tbody id="history-table"></tbody></table></div></section>
+            </section>
+        </main>
+        <footer><span><span class="footer-mark">&gt;_</span> Built to explore. Not just execute.</span><span>C11 · Python 3 · Vanilla JavaScript <span class="footer-dot">/</span> ForkLab 2.0</span></footer>
+    </div>
+</body>
+</html>
